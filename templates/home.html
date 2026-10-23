@@ -1,0 +1,269 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Management System | Backend API Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Healthcare Management System</h1>
+        <p>Enterprise Backend REST API &amp; Administration Dashboard</p>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero" aria-labelledby="welcome-heading">
+            <div class="hero-status-row">
+                <span class="status-badge active" title="Django application server is up and serving requests">
+                    &#10003; Django Server: Active
+                </span>
+                {% if db_connected %}
+                    <span class="status-badge active" title="PostgreSQL database connection verified">
+                        &#10003; PostgreSQL Database ({{ db_name }}): Connected
+                    </span>
+                {% else %}
+                    <span class="status-badge inactive" title="PostgreSQL database could not be reached">
+                        &#9888; PostgreSQL Database: Unreachable / Disconnected
+                    </span>
+                {% endif %}
+            </div>
+
+            <h2 id="welcome-heading">Welcome to the Healthcare Management API</h2>
+            <p>
+                This API provides secure healthcare workflows including token-based authentication (JWT),
+                scoped patient records management, doctor directory maintenance, and patient-doctor clinical assignments.
+            </p>
+
+            <div class="hero-actions">
+                <a class="btn" href="{% url 'rest_framework:login' %}">Browsable API Login</a>
+                <a class="btn btn-secondary" href="{% url 'admin:index' %}">Django Admin Panel</a>
+            </div>
+        </section>
+
+        <!-- Quick Start Guide -->
+        <section class="info-banner" aria-label="API Quick Start Guide">
+            <h3>&#9432; API Usage &amp; JWT Authentication Guide</h3>
+            <ol>
+                <li><strong>Register an account:</strong> Send a <code>POST</code> request to <code>{% url 'register' %}</code> with <code>name</code>, <code>email</code>, and <code>password</code> (min 8 chars).</li>
+                <li><strong>Authenticate:</strong> Send a <code>POST</code> request to <code>{% url 'login' %}</code> with your credentials to obtain JWT <code>access</code> and <code>refresh</code> tokens.</li>
+                <li><strong>Access Protected Resources:</strong> Include the header <code>Authorization: Bearer &lt;your_access_token&gt;</code> in subsequent requests.</li>
+                <li><strong>Interactive Testing:</strong> For browser-based testing via Django REST Framework's browsable interface, log in via <a href="{% url 'rest_framework:login' %}">Session Login</a>. For POST/PUT/DELETE requests with JWT, use Postman, Insomnia, or cURL.</li>
+            </ol>
+        </section>
+
+        <!-- API Modules Grid -->
+        <div class="cards-grid">
+            <!-- 1. Authentication -->
+            <article class="card">
+                <div>
+                    <div class="card-header">
+                        <h3>1. Authentication</h3>
+                        <p>User registration &amp; SimpleJWT token issuance</p>
+                    </div>
+                    <div class="endpoints-list">
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge post">POST</span>
+                                <span class="endpoint-path">{% url 'register' %}</span>
+                            </div>
+                            <span class="endpoint-desc">Register new user account (name, email, password)</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge post">POST</span>
+                                <span class="endpoint-path">{% url 'login' %}</span>
+                            </div>
+                            <span class="endpoint-desc">Authenticate &amp; receive JWT access and refresh tokens</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <p class="testing-tip">Note: Auth endpoints require HTTP POST with a JSON payload. Test via Postman or the Browsable API.</p>
+                </div>
+            </article>
+
+            <!-- 2. Patient Management -->
+            <article class="card">
+                <div>
+                    <div class="card-header">
+                        <h3>2. Patient Management</h3>
+                        <p>Scoped records (users can only access owned patients)</p>
+                    </div>
+                    <div class="endpoints-list">
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge get">GET</span>
+                                <span class="endpoint-path">{% url 'patient-list' %}</span>
+                            </div>
+                            <span class="endpoint-desc">List all patient records belonging to the authenticated user</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge post">POST</span>
+                                <span class="endpoint-path">{% url 'patient-list' %}</span>
+                            </div>
+                            <span class="endpoint-desc">Create a new patient record (name, age 0-120, gender, phone, address)</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge get">GET</span>
+                                <span class="endpoint-path">/api/patients/&lt;id&gt;/</span>
+                            </div>
+                            <span class="endpoint-desc">Retrieve an owned patient record</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge put-patch">PUT / PATCH</span>
+                                <span class="endpoint-path">/api/patients/&lt;id&gt;/</span>
+                            </div>
+                            <span class="endpoint-desc">Update or partially update an owned patient record</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge delete">DELETE</span>
+                                <span class="endpoint-path">/api/patients/&lt;id&gt;/</span>
+                            </div>
+                            <span class="endpoint-desc">Delete an owned patient record</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a class="btn btn-sm" href="{% url 'patient-list' %}">Browse Patients (GET)</a>
+                </div>
+            </article>
+
+            <!-- 3. Doctor Management -->
+            <article class="card">
+                <div>
+                    <div class="card-header">
+                        <h3>3. Doctor Management</h3>
+                        <p>Medical professional directory and profiles</p>
+                    </div>
+                    <div class="endpoints-list">
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge get">GET</span>
+                                <span class="endpoint-path">{% url 'doctor-list' %}</span>
+                            </div>
+                            <span class="endpoint-desc">List all registered medical doctors</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge post">POST</span>
+                                <span class="endpoint-path">{% url 'doctor-list' %}</span>
+                            </div>
+                            <span class="endpoint-desc">Register a new doctor (name, specialization, phone, unique email)</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge get">GET</span>
+                                <span class="endpoint-path">/api/doctors/&lt;id&gt;/</span>
+                            </div>
+                            <span class="endpoint-desc">Retrieve doctor profile details</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge put-patch">PUT / PATCH</span>
+                                <span class="endpoint-path">/api/doctors/&lt;id&gt;/</span>
+                            </div>
+                            <span class="endpoint-desc">Update doctor contact or specialization details</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge delete">DELETE</span>
+                                <span class="endpoint-path">/api/doctors/&lt;id&gt;/</span>
+                            </div>
+                            <span class="endpoint-desc">Remove doctor from directory</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a class="btn btn-sm" href="{% url 'doctor-list' %}">Browse Doctors (GET)</a>
+                </div>
+            </article>
+
+            <!-- 4. Patient-Doctor Mappings -->
+            <article class="card">
+                <div>
+                    <div class="card-header">
+                        <h3>4. Patient-Doctor Mappings</h3>
+                        <p>Clinical assignments with unambiguous routing</p>
+                    </div>
+                    <div class="endpoints-list">
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge post">POST</span>
+                                <span class="endpoint-path">{% url 'mapping-list-create' %}</span>
+                            </div>
+                            <span class="endpoint-desc">Assign doctor to an owned patient (patient, doctor)</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge get">GET</span>
+                                <span class="endpoint-path">{% url 'mapping-list-create' %}</span>
+                            </div>
+                            <span class="endpoint-desc">List all assignments for the authenticated user's patients</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge get">GET</span>
+                                <span class="endpoint-path">/api/mappings/patient/&lt;patient_id&gt;/</span>
+                            </div>
+                            <span class="endpoint-desc">Explicit endpoint: Retrieve all doctor assignments for a specific patient</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge get">GET</span>
+                                <span class="endpoint-path">/api/mappings/&lt;mapping_id&gt;/</span>
+                            </div>
+                            <span class="endpoint-desc">Retrieve a specific assignment by its mapping ID</span>
+                        </div>
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge delete">DELETE</span>
+                                <span class="endpoint-path">/api/mappings/&lt;mapping_id&gt;/</span>
+                            </div>
+                            <span class="endpoint-desc">Explicit endpoint: Delete a specific assignment by its mapping ID</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a class="btn btn-sm" href="{% url 'mapping-list-create' %}">Browse Mappings (GET)</a>
+                </div>
+            </article>
+
+            <!-- 5. Administration -->
+            <article class="card">
+                <div>
+                    <div class="card-header">
+                        <h3>5. Django Administration</h3>
+                        <p>Administrative portal for system operators</p>
+                    </div>
+                    <p style="font-size: 0.9rem; color: var(--text-slate); margin-bottom: 1.25rem;">
+                        Staff and superusers can inspect raw database models, inspect registered accounts, view audit logs, and manage relational records.
+                    </p>
+                    <div class="endpoints-list">
+                        <div class="endpoint-item">
+                            <div class="endpoint-line">
+                                <span class="method-badge get">GET</span>
+                                <span class="endpoint-path">{% url 'admin:index' %}</span>
+                            </div>
+                            <span class="endpoint-desc">Django Admin Dashboard</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a class="btn btn-sm" href="{% url 'admin:index' %}">Open Admin Panel</a>
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <footer>
+        <p>Healthcare Management System &copy; 2026 &bull; Django 5.2 &amp; Django REST Framework</p>
+    </footer>
+</body>
+</html>

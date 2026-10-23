@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
-from rest_framework import serializers
 from django.contrib.auth import authenticate
+from django.db import models
+from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
@@ -17,19 +18,23 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ["name", "email", "password"]
 
-    def validate_email(self, value):
-        value = value.strip().lower()
+    def validate_name(self, value):
+        stripped = value.strip()
+        if not stripped:
+            raise serializers.ValidationError("Name cannot be blank.")
+        return stripped
 
-        if User.objects.filter(username__iexact=value).exists():
+    def validate_email(self, value):
+        normalized = value.strip().lower()
+        if User.objects.filter(models.Q(username__iexact=normalized) | models.Q(email__iexact=normalized)).exists():
             raise serializers.ValidationError(
                 "A user with this email already exists."
             )
-
-        return value
+        return normalized
 
     def create(self, validated_data):
-        name = validated_data.pop("first_name")
-        email = validated_data.pop("email")
+        name = validated_data.pop("first_name", "").strip()
+        email = validated_data.pop("email").strip().lower()
         password = validated_data.pop("password")
 
         user = User(
@@ -53,11 +58,18 @@ class LoginSerializer(serializers.Serializer):
 
     def validate(self, data):
         email = data["email"].strip().lower()
+        password = data["password"]
+
+        user_obj = User.objects.filter(
+            models.Q(email__iexact=email) | models.Q(username__iexact=email)
+        ).first()
+
+        username = user_obj.username if user_obj else email
 
         user = authenticate(
             request=self.context.get("request"),
-            username=email,
-            password=data["password"]
+            username=username,
+            password=password
         )
 
         if user is None:

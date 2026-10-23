@@ -1,9 +1,28 @@
+# Environment variables
 .env
-.env.example
+
+# Virtual environment
 .venv/
+venv/
+ENV/
+
+# Python cache & artifacts
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
+
+# Database
 *.sqlite3
+
+# Testing & coverage
 .pytest_cache/
 .coverage
+htmlcov/
+
+# IDE & Editor settings
 .vscode/
+.idea/
+*.swp
+*.swo

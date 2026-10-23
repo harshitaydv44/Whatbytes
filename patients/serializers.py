@@ -21,12 +21,17 @@ class PatientSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
+    def validate_name(self, value):
+        stripped = value.strip()
+        if not stripped:
+            raise serializers.ValidationError("Patient name cannot be blank.")
+        return stripped
+
     def validate_age(self, value):
         if value < 0 or value > 120:
             raise serializers.ValidationError(
                 "Age must be between 0 and 120."
             )
-
         return value
 
 
@@ -47,3 +52,12 @@ class DoctorSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def validate_name(self, value):
+        stripped = value.strip()
+        if not stripped:
+            raise serializers.ValidationError("Doctor name cannot be blank.")
+        return stripped
+
+    def validate_email(self, value):
+        return value.strip().lower()
